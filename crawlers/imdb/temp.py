@@ -3,6 +3,7 @@ import re
 import time
 import csv
 from bs4 import BeautifulSoup
+import pandas as pd
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36'
                          ' (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'}
 
@@ -24,8 +25,10 @@ def main():
 
 
 def gather_reviews():
-    url = 'http://www.imdb.com//title/tt0215941/reviews?ref_=tt_urv'
+    url = 'http://www.imdb.com//title/tt0215941/reviews?start=0'
+    #url = 'http://www.imdb.com/title/tt0204946/reviews?ref_=tt_ov_rt'
     soup_rates = make_soup(url).findAll('h2')
+    reviews_num = make_soup(url).find('td', {'align': 'right'}).get_text()
     rates = []
     for item in soup_rates:
         title = item.next
@@ -38,7 +41,7 @@ def gather_reviews():
         reviews.append(item.previous.previous)
         #print(item.previous.previous)
     results = list(zip(rates, reviews))
-    print(results)
+    print(reviews_num)
 
 
 

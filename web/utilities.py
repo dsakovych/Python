@@ -407,4 +407,25 @@ def url_contacts(inp_url):
                 return 'http://' + result
     return None
 
+  
+def exact_search(text, string):
+    result = re.findall('\\b' + text + '\\b', string, flags=re.IGNORECASE)
+    if len(result) > 0:
+        return result[0]
+    else:
+        return False
 
+
+def remove_redundant_links(lst):
+    lst1 = list(map(home_page, lst))
+
+    def duplicate_item(inp, item):
+        return [i for i, x in enumerate(inp) if x == item]
+
+    d1 = dict((x, duplicate_item(lst1, x)) for x in set(lst1) if lst1.count(x) > 1)
+    for url, indexes in d1.items():
+        indexes = sorted(indexes, reverse=True)
+        indexes = indexes[:-1]
+        for ind in indexes:
+            lst.pop(ind)
+    return lst

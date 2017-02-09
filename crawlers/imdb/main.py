@@ -31,17 +31,24 @@ def main():
     counter = 0
     while True:
         heads = soup.findAll("h3")
-        data = {}
+        data = []
         for item in heads:
             try:
                 if 'title' in item.find('a').get('href'):
-                    data[item.find('a').get_text()] = 'http://www.imdb.com' + item.find('a').get('href')
+                    counter += 1
+                    data.append((item.find('a').get_text(),
+                                 ('http://www.imdb.com' + item.find('a').get('href')).replace('?ref_=adv_li_tt', ''),
+                                 2000, counter)
+                                )
+                    #data[item.find('a').get_text()] = ('http://www.imdb.com' + item.find('a').get('href')).replace('?ref_=adv_li_tt', '')
             except AttributeError:
                 continue
         counter += len(data)
-        with open('data.csv', 'a', encoding='utf8') as file:
+        with open('2000.csv', 'a', encoding='utf8') as file:
             w = csv.writer(file, delimiter='|', lineterminator='\n')
-            w.writerows(data.items())
+            to_write = data#.items()
+            print(to_write)
+            w.writerows(to_write)
         print('%d films were gathered and written to data.csv' % counter)
         if find_next_page(soup):
             print('parsing ' + find_next_page(soup))

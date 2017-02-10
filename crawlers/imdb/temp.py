@@ -13,54 +13,44 @@ def make_soup(url):
     return BeautifulSoup(requests.get(url, headers=headers).content, 'lxml')
 
 
-def main():
-    url = 'http://www.imdb.com/title/tt0204946/'
-    url1 = 'http://www.imdb.com/title/tt0215941/'
-    url2 = 'http://www.imdb.com/title/tt0266802/'
-    url3 = 'http://www.imdb.com/title/tt0195714/'
-    soup = make_soup(url3)
+def get_reviews_num(input):
     try:
-        text = soup(text=re.compile('user reviews'))[0].parent.get('href')
-        print('http://www.imdb.com/' + text)
+        return int(make_soup(input).find('td', {'align': 'right'}).get_text().split(' ')[0])
     except IndexError:
-        print('ololo')
+        return 0
 
 
-def gather_reviews(input_url):
-
-    def get_reviews_num(input):
-        try:
-            return int(make_soup(input).find('td', {'align': 'right'}).get_text().split(' ')[0])
-        except IndexError:
-            return 0
+def gather_reviews(id, name, input_url):
+    input_url = input_url + '/reviews'
 
     reviews_pages = int(get_reviews_num(input_url) / 10) if get_reviews_num(input_url) % 10 == 0 else int(
-                        get_reviews_num(input_url) / 10) + 1
+        get_reviews_num(input_url) / 10) + 1
 
     df = pd.DataFrame()
-
-    for i in range(reviews_pages):
-        page = input_url + '?start=' + str(i*10)
+    print(reviews_pages)
+    for i in range(1):
+        page = input_url + '?start=' + str(i * 10)
         print(page)
         soup_rates = make_soup(page).findAll('h2')
         soup_reviews = make_soup(page).findAll('div', {'class': 'yn'})
         rates = []
         for item in soup_rates:
-            title = item.next
+            title = item.next.replace('|', '')
             rate = item.next.next.next.get('alt') if item.next.next.next.get('alt') is not None else 'nan'
             rates.append((title, rate))
         reviews = []
         for item in soup_reviews:
-            reviews.append(item.previous.previous)
+            reviews.append(item.previousSibling.previousSibling.get_text().replace('\n', '').replace('|', ''))
         results = list(zip(rates, reviews))
         for item in results:
-            df = df.append([{'name': 'name', 'title': item[0][0], 'rate': item[0][1], 'review': item[1]}])
+            df = df.append([{'name': name, 'title': item[0][0], 'rate': item[0][1], 'review': item[1]}])
 
-        print(df)
+        df = df.ix[:, ['name', 'rate', 'title', 'review']]
+        df.to_csv(id + '.csv', sep='|', quotechar='"', index='False')
 
 
 if __name__ == '__main__':
-    url = 'http://www.imdb.com//title/tt0215941/reviews'
-    url1 = 'http://www.imdb.com/title/tt0195714/reviews'
-    # main()
-    gather_reviews(url)
+    url = 'http://www.imdb.com//title/tt0215941'
+    url1 = 'http://www.imdb.com//title/tt0195714'
+    name = 'Unbreakable'
+    gather_reviews(name, url1)

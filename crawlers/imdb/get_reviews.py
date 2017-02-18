@@ -3,6 +3,7 @@ from get_films import make_soup
 import csv
 import time
 import random
+import sys
 
 
 def get_reviews_num(input):
@@ -17,7 +18,8 @@ def gather_reviews(id, name, input_url):
     input_url += 'reviews'
     reviews_pages = int(get_reviews_num(input_url) / 10) if get_reviews_num(input_url) % 10 == 0 else int(
                         get_reviews_num(input_url) / 10) + 1
-
+    if reviews_pages == 0:
+        return
     df = pd.DataFrame()
     print('Starting gathering reviews for "%s". Total number of reviews is %d' % (name, get_reviews_num(input_url)))
     for i in range(reviews_pages):
@@ -27,9 +29,12 @@ def gather_reviews(id, name, input_url):
         soup_reviews = make_soup(page).findAll('div', {'class': 'yn'})
         rates = []
         for item in soup_rates:
-            title = item.next.replace('|', '')
-            rate = item.next.next.next.get('alt') if item.next.next.next.get('alt') is not None else 'nan'
-            rates.append((title, rate))
+            try:
+                title = item.next.replace('|', '')
+                rate = item.next.next.next.get('alt') if item.next.next.next.get('alt') is not None else 'nan'
+                rates.append((title, rate))
+            except AttributeError:
+                continue
         reviews = []
         for item in soup_reviews:
             reviews.append(item.previousSibling.previousSibling.get_text().replace('\n', '').replace('|', ''))
@@ -40,22 +45,29 @@ def gather_reviews(id, name, input_url):
     df = df.reset_index()
     df = df.ix[:, ['name', 'rate', 'title', 'review']]
     df.to_csv('reviews/' + id + '.csv', sep='|', index='False')
+    del df
     print('Done! All reviews were written to file "%s"' % str(id + '.csv'))
+    return
 
 
 def main():
     years = [str(x) for x in range(2000, 2018)]
-    for year in years[:1]:
-        with open('films/' + year + '.csv') as file:
+    for year in years[1:2]:
+        with open('films/' + year + '.csv', encoding='utf8') as file:
             line_reader = csv.reader(file, delimiter='|')
             for row in line_reader:
-                gather_reviews(row[3], row[0], row[1])
-                pause = random.randint(10, 30)
-                print('*************************')
-                print('pause: %d seconds' % pause)
-                print('*************************')
-                time.sleep(pause)  # at least we are trying to be polite
+                try:
+                    gather_reviews(row[3], row[0], row[1])
+                except ConnectionResetError:
+                    print('ERROR on id %s : %s' % (row[3], sys.exc_info()[1]))
+                    continue
+                #pause = random.randint(5, 10)
+                #print('*************************')
+                #print('pause: %d seconds' % pause)
+                #print('*************************')
+                #time.sleep(pause)  # at least we are trying to be polite
 
 
 if __name__ == '__main__':
     main()
+

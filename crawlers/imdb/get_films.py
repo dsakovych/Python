@@ -41,7 +41,7 @@ def main():
                         counter += 1
                         data.append((item.find('a').get_text(),
                                     ('http://www.imdb.com' + item.find('a').get('href')).replace('?ref_=adv_li_tt', ''),
-                                     2000, counter)
+                                     year, counter)
                                     )
                         #data[item.find('a').get_text()] = ('http://www.imdb.com' + item.find('a').get('href')).replace('?ref_=adv_li_tt', '')
                 except AttributeError:
